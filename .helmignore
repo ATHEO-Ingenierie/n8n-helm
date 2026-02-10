@@ -21,5 +21,7 @@
 .idea/
 *.tmproj
 .vscode/
-# Documentation
-README.md
+# CI/CD
+.github/
+# ArtifactHub repo metadata (pushed separately via oras)
+artifacthub-repo.yml
