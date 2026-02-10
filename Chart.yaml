@@ -27,6 +27,3 @@ annotations:
       url: https://docs.n8n.io
     - name: support
       url: https://github.com/ATHEO-Ingenierie/n8n-helm/issues
-  artifacthub.io/images: |
-    - name: n8n
-      image: n8nio/n8n:1.76.1
