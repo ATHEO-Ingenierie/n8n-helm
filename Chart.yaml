@@ -8,6 +8,25 @@ appVersion: "2.6.4"
 home: https://github.com/ATHEO-Ingenierie/n8n-helm
 sources:
   - https://github.com/ATHEO-Ingenierie/n8n-helm
+keywords:
+  - n8n
+  - workflow
+  - automation
+  - low-code
+maintainers:
+  - name: ATHEO Ingenierie
+    url: https://github.com/ATHEO-Ingenierie
+icon: https://raw.githubusercontent.com/n8n-io/n8n/master/assets/n8n-logo.png
 annotations:
   org.opencontainers.image.source: https://github.com/ATHEO-Ingenierie/n8n-helm
   org.opencontainers.image.description: A Helm chart for deploying n8n workflow automation on Kubernetes
+  artifacthub.io/license: Apache-2.0
+  artifacthub.io/category: integration-delivery
+  artifacthub.io/links: |
+    - name: n8n Documentation
+      url: https://docs.n8n.io
+    - name: support
+      url: https://github.com/ATHEO-Ingenierie/n8n-helm/issues
+  artifacthub.io/images: |
+    - name: n8n
+      image: n8nio/n8n:1.76.1
