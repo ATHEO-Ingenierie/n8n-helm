@@ -3,7 +3,7 @@ name: n8n
 description: A Helm chart for deploying n8n workflow automation on Kubernetes
 type: application
 version: 0.0.0  # set from git tag at release time
-appVersion: "1.76.1"
+appVersion: "2.6.4"
 
 home: https://github.com/ATHEO-Ingenierie/n8n-helm
 sources:
