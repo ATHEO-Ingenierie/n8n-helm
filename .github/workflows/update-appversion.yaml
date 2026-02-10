@@ -1,0 +1,71 @@
+name: Update n8n appVersion
+
+on:
+  schedule:
+    - cron: '0 8 * * *'  # daily at 08:00 UTC
+  workflow_dispatch:
+
+jobs:
+  check-update:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Check for new n8n release
+        id: check
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          CURRENT=$(yq '.appVersion' Chart.yaml)
+          LATEST=$(gh api repos/n8n-io/n8n/releases/latest --jq '.tag_name' | sed 's/^n8n@//')
+          echo "current=$CURRENT" >> "$GITHUB_OUTPUT"
+          echo "latest=$LATEST" >> "$GITHUB_OUTPUT"
+          if [ "$CURRENT" = "$LATEST" ]; then
+            echo "update=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "update=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Build PR body
+        if: steps.check.outputs.update == 'true'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          CURRENT: ${{ steps.check.outputs.current }}
+          LATEST: ${{ steps.check.outputs.latest }}
+        run: |
+          RELEASE_NOTES=$(gh api "repos/n8n-io/n8n/releases/tags/n8n@${LATEST}" --jq '.body')
+          {
+            echo "## n8n ${LATEST}"
+            echo ""
+            echo "Updates \`appVersion\` from \`${CURRENT}\` to \`${LATEST}\`."
+            echo ""
+            echo "---"
+            echo ""
+            echo "### Release notes"
+            echo ""
+            echo "${RELEASE_NOTES}"
+            echo ""
+            echo "---"
+            echo ""
+            echo "Source: https://github.com/n8n-io/n8n/releases/tag/n8n@${LATEST}"
+          } > /tmp/pr-body.md
+
+      - name: Create pull request
+        if: steps.check.outputs.update == 'true'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          LATEST: ${{ steps.check.outputs.latest }}
+        run: |
+          yq -i ".appVersion = \"${LATEST}\"" Chart.yaml
+          BRANCH="update-appversion-${LATEST}"
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git checkout -b "$BRANCH"
+          git add Chart.yaml
+          git commit -m "Update n8n appVersion to ${LATEST}"
+          git push -u origin "$BRANCH"
+          gh pr create --title "Update n8n appVersion to ${LATEST}" --body-file /tmp/pr-body.md
