@@ -1,5 +1,7 @@
 # n8n Helm Chart
 
+[![Artifact Hub](https://img.shields.io/endpoint?url=https://artifacthub.io/badge/repository/n8n-helm)](https://artifacthub.io/packages/search?repo=n8n-helm)
+
 > **Warning:** This chart is a work in progress and not yet ready for production use.
 
 A Helm chart for deploying [n8n](https://n8n.io) workflow automation on Kubernetes.
