@@ -1,0 +1,100 @@
+{{- if gt (int .Values.worker.replicas) 0 }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "n8n.fullname" . }}-worker
+  labels:
+    {{- include "n8n.labels" . | nindent 4 }}
+    app.kubernetes.io/component: worker
+spec:
+  replicas: {{ .Values.worker.replicas }}
+  selector:
+    matchLabels:
+      {{- include "n8n.selectorLabels" . | nindent 6 }}
+      app.kubernetes.io/component: worker
+  template:
+    metadata:
+      annotations:
+        checksum/config: {{ include (print $.Template.BasePath "/configmap.yaml") . | sha256sum }}
+        checksum/secret: {{ include (print $.Template.BasePath "/secret.yaml") . | sha256sum }}
+        checksum/secret-credentials: {{ include (print $.Template.BasePath "/secret-credentials.yaml") . | sha256sum }}
+        {{- with .Values.worker.podAnnotations }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+      labels:
+        {{- include "n8n.labels" . | nindent 8 }}
+        app.kubernetes.io/component: worker
+        {{- with .Values.worker.podLabels }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+    spec:
+      {{- with .Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      serviceAccountName: {{ include "n8n.serviceAccountName" . }}
+      containers:
+        - name: n8n-worker
+          image: {{ include "n8n.image" . | quote }}
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          args: ["n8n", "worker", "--concurrency={{ .Values.worker.concurrency }}"]
+          env:
+            {{- include "n8n.env" . | nindent 12 }}
+            {{- if eq .Values.runners.mode "external" }}
+            - name: N8N_RUNNERS_BROKER_LISTEN_ADDRESS
+              value: "0.0.0.0"
+            - name: N8N_RUNNERS_AUTH_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "n8n.fullname" . }}-credentials
+                  key: runner-auth-token
+            {{- end }}
+            {{- with .Values.worker.extraEnv }}
+            {{- toYaml . | nindent 12 }}
+            {{- end }}
+          envFrom:
+            {{- include "n8n.envFrom" . | nindent 12 }}
+          {{- with .Values.worker.resources }}
+          resources:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+        {{- if eq .Values.runners.mode "external" }}
+        {{- range $i, $runner := .Values.runners.containers }}
+        {{- $img := default dict $runner.image }}
+        - name: n8n-runner-{{ $i }}
+          image: "{{ default $.Values.runners.image.repository $img.repository }}:{{ default (default $.Chart.AppVersion $.Values.runners.image.tag) $img.tag }}"
+          imagePullPolicy: {{ default $.Values.runners.image.pullPolicy $img.pullPolicy }}
+          args:
+            {{- toYaml $runner.languages | nindent 12 }}
+          env:
+            - name: N8N_RUNNERS_AUTH_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "n8n.fullname" $ }}-credentials
+                  key: runner-auth-token
+            - name: N8N_RUNNERS_TASK_BROKER_URI
+              value: "http://localhost:5679"
+            {{- with $.Values.runners.extraEnv }}
+            {{- toYaml . | nindent 12 }}
+            {{- end }}
+          envFrom:
+            {{- include "n8n.envFrom" $ | nindent 12 }}
+          {{- with $.Values.runners.resources }}
+          resources:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+        {{- end }}
+        {{- end }}
+      {{- with .Values.worker.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.worker.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.worker.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+{{- end }}

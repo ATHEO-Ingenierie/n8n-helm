@@ -1,0 +1,172 @@
+image:
+  repository: n8nio/n8n
+  tag: ""  # defaults to appVersion
+  pullPolicy: IfNotPresent
+
+imagePullSecrets: []
+nameOverride: ""
+fullnameOverride: ""
+
+# -- n8n configuration as environment variables (stored in ConfigMap)
+# All keys are set as env vars on every n8n container
+config: {}
+  # N8N_LOG_LEVEL: info
+  # GENERIC_TIMEZONE: Europe/Paris
+
+# -- Sensitive n8n configuration (stored in Secret)
+# All keys are set as env vars on every n8n container
+secret: {}
+  # N8N_ENCRYPTION_KEY: "change-me"
+
+# -- Database configuration
+database:
+  # sqlite or postgresdb (workers require postgresdb)
+  type: sqlite
+  postgresdb:
+    host: ""
+    port: 5432
+    database: n8n
+    user: n8n
+    password: ""
+    # Use an existing secret for the password
+    existingSecret: ""
+    existingSecretPasswordKey: password
+
+# -- Task runners
+runners:
+  # internal: runners execute inside the worker process
+  # external: runners run as sidecar containers alongside each worker
+  mode: internal
+  # Default image for runner sidecars (can be overridden per container)
+  image:
+    repository: n8nio/n8n-runner
+    tag: ""  # defaults to appVersion
+    pullPolicy: IfNotPresent
+  # Shared auth token between worker and runner sidecars (required for external mode)
+  authToken: ""
+  resources: {}
+  extraEnv: []
+  # Runner sidecar definitions (external mode only)
+  # Each entry creates one sidecar container; languages are passed as CMD args
+  # Available languages: javascript, python
+  containers:
+    - languages:
+        - javascript
+        - python
+  # Example: split runners by language with per-runner images
+  # containers:
+  #   - languages: ["javascript"]
+  #     image:
+  #       repository: n8nio/n8n-runner-js
+  #   - languages: ["python"]
+  #     image:
+  #       repository: n8nio/n8n-runner-python
+
+# -- S3 external storage for binary data
+# Required for binary data persistence in queue mode
+externalStorage:
+  s3:
+    enabled: false
+    host: ""            # e.g. s3.us-east-1.amazonaws.com
+    bucketName: ""
+    bucketRegion: ""
+    accessKey: ""
+    accessSecret: ""
+    # Use an existing secret for S3 credentials
+    existingSecret: ""
+    existingSecretAccessKeyKey: access-key
+    existingSecretAccessSecretKey: access-secret
+
+# -- Persistence for n8n data directory (standalone/SQLite mode)
+persistence:
+  enabled: false
+  size: 1Gi
+  storageClass: ""
+  accessModes:
+    - ReadWriteOnce
+
+# -- Main n8n process
+main:
+  replicas: 1
+  # Multi-main HA settings (only used when replicas > 1, requires queue mode)
+  multiMain:
+    ttl: 10
+    checkInterval: 3
+  resources: {}
+  podAnnotations: {}
+  podLabels: {}
+  nodeSelector: {}
+  tolerations: []
+  affinity: {}
+  extraEnv: []
+
+# -- Worker configuration
+# Set replicas > 0 to enable queue mode (requires PostgreSQL + Redis)
+worker:
+  replicas: 0
+  concurrency: 10
+  resources: {}
+  podAnnotations: {}
+  podLabels: {}
+  nodeSelector: {}
+  tolerations: []
+  affinity: {}
+  extraEnv: []
+
+# -- Webhook processor (requires workers)
+webhook:
+  enabled: false
+  replicas: 2
+  # External URL for webhooks (e.g. https://n8n.example.com)
+  # Defaults to https://<first ingress host> when ingress is enabled
+  url: ""
+  resources: {}
+  podAnnotations: {}
+  podLabels: {}
+  nodeSelector: {}
+  tolerations: []
+  affinity: {}
+  extraEnv: []
+
+# -- Helm test connection pod
+testConnection:
+  enabled: true
+  image: busybox
+
+serviceAccount:
+  create: true
+  automount: true
+  annotations: {}
+  name: ""
+
+service:
+  type: ClusterIP
+  port: 80
+
+ingress:
+  enabled: false
+  className: ""
+  annotations: {}
+  hosts:
+    - host: n8n.local
+      paths:
+        - path: /
+          pathType: Prefix
+  tls: []
+
+# -- Redis (bitnami/redis subchart)
+# Required when worker.replicas > 0 or webhook.enabled=true
+redis:
+  enabled: false
+  architecture: standalone
+  auth:
+    enabled: true
+    password: ""
+
+# -- External Redis (when not using the subchart)
+externalRedis:
+  host: ""
+  port: 6379
+  password: ""
+  existingSecret: ""
+  existingSecretPasswordKey: redis-password

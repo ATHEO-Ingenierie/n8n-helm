@@ -1,0 +1,17 @@
+{{- if .Values.testConnection.enabled }}
+apiVersion: v1
+kind: Pod
+metadata:
+  name: "{{ include "n8n.fullname" . }}-test-connection"
+  labels:
+    {{- include "n8n.labels" . | nindent 4 }}
+  annotations:
+    "helm.sh/hook": test
+spec:
+  containers:
+    - name: wget
+      image: {{ .Values.testConnection.image }}
+      command: ['wget']
+      args: ['--spider', '{{ include "n8n.fullname" . }}:{{ .Values.service.port }}/healthz']
+  restartPolicy: Never
+{{- end }}

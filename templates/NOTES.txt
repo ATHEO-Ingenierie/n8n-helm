@@ -1,0 +1,40 @@
+{{- include "n8n.validate" . -}}
+
+n8n has been deployed in {{ .Values.mode }} mode.
+
+{{- if eq .Values.mode "standalone" }}
+
+  Running as a single all-in-one instance.
+  {{- if eq .Values.database.type "sqlite" }}
+  Database: SQLite
+  {{- if not .Values.persistence.enabled }}
+  WARNING: Persistence is disabled. Data will be lost on pod restart.
+           Set persistence.enabled=true for production use.
+  {{- end }}
+  {{- else }}
+  Database: PostgreSQL ({{ .Values.database.postgresdb.host }})
+  {{- end }}
+
+{{- else }}
+
+  Running in queue mode with:
+  - 1 main process
+  - {{ .Values.worker.replicas }} worker(s) with {{ .Values.runners.mode }} runners
+  {{- if .Values.webhook.enabled }}
+  - {{ .Values.webhook.replicas }} webhook processor(s)
+  {{- end }}
+  Database: PostgreSQL ({{ .Values.database.postgresdb.host }})
+  Redis: {{ include "n8n.redis.host" . }}:{{ include "n8n.redis.port" . }}
+
+{{- end }}
+
+Access n8n:
+{{- if .Values.ingress.enabled }}
+{{- range $host := .Values.ingress.hosts }}
+  {{- range .paths }}
+  http{{ if $.Values.ingress.tls }}s{{ end }}://{{ $host.host }}{{ .path }}
+  {{- end }}
+{{- end }}
+{{- else }}
+  kubectl port-forward svc/{{ include "n8n.fullname" . }} 5678:{{ .Values.service.port }} --namespace {{ .Release.Namespace }}
+{{- end }}

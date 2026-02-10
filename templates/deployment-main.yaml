@@ -1,0 +1,130 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "n8n.fullname" . }}
+  labels:
+    {{- include "n8n.labels" . | nindent 4 }}
+    app.kubernetes.io/component: main
+spec:
+  replicas: {{ .Values.main.replicas }}
+  strategy:
+    type: {{ if gt (int .Values.main.replicas) 1 }}RollingUpdate{{ else }}Recreate{{ end }}
+  selector:
+    matchLabels:
+      {{- include "n8n.selectorLabels" . | nindent 6 }}
+      app.kubernetes.io/component: main
+  template:
+    metadata:
+      annotations:
+        checksum/config: {{ include (print $.Template.BasePath "/configmap.yaml") . | sha256sum }}
+        checksum/secret: {{ include (print $.Template.BasePath "/secret.yaml") . | sha256sum }}
+        checksum/secret-credentials: {{ include (print $.Template.BasePath "/secret-credentials.yaml") . | sha256sum }}
+        {{- with .Values.main.podAnnotations }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+      labels:
+        {{- include "n8n.labels" . | nindent 8 }}
+        app.kubernetes.io/component: main
+        {{- with .Values.main.podLabels }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+    spec:
+      {{- with .Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      serviceAccountName: {{ include "n8n.serviceAccountName" . }}
+      containers:
+        - name: n8n
+          image: {{ include "n8n.image" . | quote }}
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          ports:
+            - name: http
+              containerPort: 5678
+              protocol: TCP
+          env:
+            {{- include "n8n.env" . | nindent 12 }}
+            {{- if .Values.webhook.enabled }}
+            - name: N8N_DISABLE_PRODUCTION_MAIN_PROCESS
+              value: "true"
+            {{- end }}
+            {{- if eq .Values.runners.mode "external" }}
+            - name: N8N_RUNNERS_BROKER_LISTEN_ADDRESS
+              value: "0.0.0.0"
+            - name: N8N_RUNNERS_AUTH_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "n8n.fullname" . }}-credentials
+                  key: runner-auth-token
+            {{- end }}
+            {{- with .Values.main.extraEnv }}
+            {{- toYaml . | nindent 12 }}
+            {{- end }}
+          envFrom:
+            {{- include "n8n.envFrom" . | nindent 12 }}
+          livenessProbe:
+            httpGet:
+              path: /healthz
+              port: http
+            initialDelaySeconds: 30
+            periodSeconds: 10
+          readinessProbe:
+            httpGet:
+              path: /healthz
+              port: http
+            initialDelaySeconds: 5
+            periodSeconds: 5
+          {{- with .Values.main.resources }}
+          resources:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          {{- if and .Values.persistence.enabled (not (include "n8n.isQueueMode" .)) }}
+          volumeMounts:
+            - name: data
+              mountPath: /home/node/.n8n
+          {{- end }}
+        {{- if eq .Values.runners.mode "external" }}
+        {{- range $i, $runner := .Values.runners.containers }}
+        {{- $img := default dict $runner.image }}
+        - name: n8n-runner-{{ $i }}
+          image: "{{ default $.Values.runners.image.repository $img.repository }}:{{ default (default $.Chart.AppVersion $.Values.runners.image.tag) $img.tag }}"
+          imagePullPolicy: {{ default $.Values.runners.image.pullPolicy $img.pullPolicy }}
+          args:
+            {{- toYaml $runner.languages | nindent 12 }}
+          env:
+            - name: N8N_RUNNERS_AUTH_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "n8n.fullname" $ }}-credentials
+                  key: runner-auth-token
+            - name: N8N_RUNNERS_TASK_BROKER_URI
+              value: "http://localhost:5679"
+            {{- with $.Values.runners.extraEnv }}
+            {{- toYaml . | nindent 12 }}
+            {{- end }}
+          envFrom:
+            {{- include "n8n.envFrom" $ | nindent 12 }}
+          {{- with $.Values.runners.resources }}
+          resources:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+        {{- end }}
+        {{- end }}
+      {{- if and .Values.persistence.enabled (not (include "n8n.isQueueMode" .)) }}
+      volumes:
+        - name: data
+          persistentVolumeClaim:
+            claimName: {{ include "n8n.fullname" . }}
+      {{- end }}
+      {{- with .Values.main.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.main.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.main.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
