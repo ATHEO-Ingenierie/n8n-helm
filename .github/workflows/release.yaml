@@ -19,6 +19,8 @@ jobs:
 
       - name: Package and push
         run: |
+          TAG="${GITHUB_REF_NAME}"
+          yq -i ".version = \"${TAG}\"" Chart.yaml
           OWNER=$(echo "${{ github.repository_owner }}" | tr '[:upper:]' '[:lower:]')
           helm package .
           helm push n8n-*.tgz "oci://ghcr.io/${OWNER}/charts"
