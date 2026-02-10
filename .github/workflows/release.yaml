@@ -26,4 +26,4 @@ jobs:
         run: |
           OWNER=$(echo "${{ github.repository_owner }}" | tr '[:upper:]' '[:lower:]')
           helm package .
-          helm push n8n-*.tgz "oci://ghcr.io/${OWNER}"
+          helm push n8n-*.tgz "oci://ghcr.io/${OWNER}/charts"

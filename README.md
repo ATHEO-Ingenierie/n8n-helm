@@ -67,7 +67,7 @@ External runners support language selection (javascript, python) passed as CMD a
 ## Installation
 
 ```bash
-helm install n8n oci://ghcr.io/atheo-ingenierie/n8n --version 0.1.0
+helm install n8n oci://ghcr.io/atheo-ingenierie/charts/n8n --version 0.1.0
 ```
 
 To install from source:
