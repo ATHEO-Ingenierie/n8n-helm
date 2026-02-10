@@ -11,9 +11,3 @@ sources:
 annotations:
   org.opencontainers.image.source: https://github.com/ATHEO-Ingenierie/n8n-helm
   org.opencontainers.image.description: A Helm chart for deploying n8n workflow automation on Kubernetes
-
-dependencies:
-  - name: redis
-    version: ">=18.0.0"
-    repository: https://charts.bitnami.com/bitnami
-    condition: redis.enabled

@@ -34,7 +34,7 @@ graph TD
     PG[(PostgreSQL)]:::infra
     Redis[(Redis)]:::infra
 
-    subgraph s3_box["S3 [externalStorage.s3.enabled: true]"]
+    subgraph s3_box["S3 [externalS3.enabled: true]"]
         S3[(S3 bucket)]:::infra
     end
 
@@ -73,7 +73,6 @@ helm install n8n oci://ghcr.io/atheo-ingenierie/charts/n8n --version 0.1.0
 To install from source:
 
 ```bash
-helm dependency update
 helm install n8n .
 ```
 
@@ -115,10 +114,8 @@ database:
     database: n8n
     user: n8n
     password: "my-password"
-redis:
-  enabled: true
-runners:
-  mode: internal
+externalRedis:
+  host: redis.default.svc
 worker:
   replicas: 3
 secret:
@@ -137,8 +134,10 @@ database:
     user: n8n
     existingSecret: my-db-secret
     existingSecretPasswordKey: password
-redis:
-  enabled: true
+externalRedis:
+  host: redis.default.svc
+  existingSecret: my-redis-secret
+  existingSecretPasswordKey: redis-password
 runners:
   mode: external
   authToken: "my-runner-secret-token"
@@ -169,26 +168,25 @@ database:
     database: n8n
     user: n8n
     password: "my-password"
-redis:
+externalRedis:
+  host: redis.default.svc
+externalS3:
   enabled: true
-externalStorage:
-  s3:
-    enabled: true
-    host: s3.us-east-1.amazonaws.com
-    bucketName: my-n8n-bucket
-    bucketRegion: us-east-1
-    accessKey: "AKIAIOSFODNN7EXAMPLE"
-    accessSecret: "wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY"
+  host: s3.us-east-1.amazonaws.com
+  bucketName: my-n8n-bucket
+  bucketRegion: us-east-1
+  accessKey: "AKIAIOSFODNN7EXAMPLE"
+  accessSecret: "wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY"
 worker:
   replicas: 3
 secret:
   N8N_ENCRYPTION_KEY: "change-me-to-a-random-string"
 ```
 
-### Bring your own Redis
+### With Redis authentication
 
 ```yaml
-# values-external-redis.yaml
+# values-redis-auth.yaml
 database:
   type: postgresdb
   postgresdb:
@@ -196,11 +194,8 @@ database:
     database: n8n
     user: n8n
     password: "my-password"
-redis:
-  enabled: false
 externalRedis:
   host: redis.default.svc
-  port: 6379
   existingSecret: my-redis-secret
   existingSecretPasswordKey: redis-password
 worker:
@@ -208,6 +203,8 @@ worker:
 webhook:
   enabled: true
   replicas: 2
+secret:
+  N8N_ENCRYPTION_KEY: "change-me-to-a-random-string"
 ```
 
 ### Multi-main (HA)
@@ -223,8 +220,8 @@ database:
     database: n8n
     user: n8n
     password: "my-password"
-redis:
-  enabled: true
+externalRedis:
+  host: redis.default.svc
 main:
   replicas: 3
   multiMain:
@@ -305,19 +302,19 @@ secret:
 
 All components also support `podAnnotations`, `podLabels`, `nodeSelector`, `tolerations`, and `affinity`.
 
-### External storage (S3)
+### External S3
 
 | Parameter | Description | Default |
 |-----------|-------------|---------|
-| `externalStorage.s3.enabled` | Enable S3 binary data storage | `false` |
-| `externalStorage.s3.host` | S3 host (e.g. `s3.us-east-1.amazonaws.com`) | `""` |
-| `externalStorage.s3.bucketName` | S3 bucket name | `""` |
-| `externalStorage.s3.bucketRegion` | S3 bucket region | `""` |
-| `externalStorage.s3.accessKey` | S3 access key (plain text) | `""` |
-| `externalStorage.s3.accessSecret` | S3 access secret (plain text) | `""` |
-| `externalStorage.s3.existingSecret` | Existing secret for S3 credentials | `""` |
-| `externalStorage.s3.existingSecretAccessKeyKey` | Key for access key in existing secret | `access-key` |
-| `externalStorage.s3.existingSecretAccessSecretKey` | Key for access secret in existing secret | `access-secret` |
+| `externalS3.enabled` | Enable S3 binary data storage | `false` |
+| `externalS3.host` | S3 host (e.g. `s3.us-east-1.amazonaws.com`) | `""` |
+| `externalS3.bucketName` | S3 bucket name | `""` |
+| `externalS3.bucketRegion` | S3 bucket region | `""` |
+| `externalS3.accessKey` | S3 access key (plain text) | `""` |
+| `externalS3.accessSecret` | S3 access secret (plain text) | `""` |
+| `externalS3.existingSecret` | Existing secret for S3 credentials | `""` |
+| `externalS3.existingSecretAccessKeyKey` | Key for access key in existing secret | `access-key` |
+| `externalS3.existingSecretAccessSecretKey` | Key for access secret in existing secret | `access-secret` |
 
 ### Persistence
 
@@ -328,17 +325,13 @@ All components also support `podAnnotations`, `podLabels`, `nodeSelector`, `tole
 | `persistence.storageClass` | Storage class | `""` |
 | `persistence.accessModes` | PVC access modes | `[ReadWriteOnce]` |
 
-### Redis
+### External Redis
 
 | Parameter | Description | Default |
 |-----------|-------------|---------|
-| `redis.enabled` | Deploy Redis subchart (bitnami/redis) | `false` |
-| `redis.architecture` | Redis architecture | `standalone` |
-| `redis.auth.enabled` | Enable Redis auth | `true` |
-| `redis.auth.password` | Redis password | `""` |
-| `externalRedis.host` | External Redis host | `""` |
-| `externalRedis.port` | External Redis port | `6379` |
-| `externalRedis.password` | External Redis password | `""` |
+| `externalRedis.host` | Redis host (required when workers or webhooks enabled) | `""` |
+| `externalRedis.port` | Redis port | `6379` |
+| `externalRedis.password` | Redis password (plain text) | `""` |
 | `externalRedis.existingSecret` | Existing secret for Redis password | `""` |
 | `externalRedis.existingSecretPasswordKey` | Key in the existing secret | `redis-password` |
 
@@ -367,12 +360,10 @@ The chart validates your configuration and fails with a clear error message if:
 - `database.type=postgresdb` without a host
 - `database.type=postgresdb` without a password or existing secret
 - `database.postgresdb.password` and `database.postgresdb.existingSecret` both set (mutually exclusive)
-- `redis.enabled=true` and `externalRedis.host` both set (mutually exclusive)
-- `externalRedis.host` set without authentication configured
 - `externalRedis.password` and `externalRedis.existingSecret` both set (mutually exclusive)
 - `runners.mode=external` without `runners.authToken`
 - `persistence.enabled=true` with `worker.replicas > 0` (use S3 for binary data with workers)
-- `externalStorage.s3.enabled=true` without `host`, `bucketName`, or `bucketRegion`
-- `externalStorage.s3.enabled=true` without credentials (`accessKey`/`accessSecret` or `existingSecret`)
-- `externalStorage.s3.accessKey` and `externalStorage.s3.existingSecret` both set (mutually exclusive)
+- `externalS3.enabled=true` without `host`, `bucketName`, or `bucketRegion`
+- `externalS3.enabled=true` without credentials (`accessKey`/`accessSecret` or `existingSecret`)
+- `externalS3.accessKey` and `externalS3.existingSecret` both set (mutually exclusive)
 - `main.replicas > 1` without `worker.replicas > 0` (multi-main requires PostgreSQL + Redis)

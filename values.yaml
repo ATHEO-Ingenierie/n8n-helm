@@ -62,20 +62,19 @@ runners:
   #     image:
   #       repository: n8nio/n8n-runner-python
 
-# -- S3 external storage for binary data
+# -- External S3 storage for binary data
 # Required for binary data persistence in queue mode
-externalStorage:
-  s3:
-    enabled: false
-    host: ""            # e.g. s3.us-east-1.amazonaws.com
-    bucketName: ""
-    bucketRegion: ""
-    accessKey: ""
-    accessSecret: ""
-    # Use an existing secret for S3 credentials
-    existingSecret: ""
-    existingSecretAccessKeyKey: access-key
-    existingSecretAccessSecretKey: access-secret
+externalS3:
+  enabled: false
+  host: ""            # e.g. s3.us-east-1.amazonaws.com
+  bucketName: ""
+  bucketRegion: ""
+  accessKey: ""
+  accessSecret: ""
+  # Use an existing secret for S3 credentials
+  existingSecret: ""
+  existingSecretAccessKeyKey: access-key
+  existingSecretAccessSecretKey: access-secret
 
 # -- Persistence for n8n data directory (standalone/SQLite mode)
 persistence:
@@ -154,16 +153,7 @@ ingress:
           pathType: Prefix
   tls: []
 
-# -- Redis (bitnami/redis subchart)
-# Required when worker.replicas > 0 or webhook.enabled=true
-redis:
-  enabled: false
-  architecture: standalone
-  auth:
-    enabled: true
-    password: ""
-
-# -- External Redis (when not using the subchart)
+# -- External Redis connection (required when worker.replicas > 0 or webhook.enabled=true)
 externalRedis:
   host: ""
   port: 6379
