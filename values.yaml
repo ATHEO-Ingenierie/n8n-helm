@@ -39,7 +39,7 @@ runners:
   mode: internal
   # Default image for runner sidecars (can be overridden per container)
   image:
-    repository: n8nio/n8n-runner
+    repository: n8nio/runners
     tag: ""  # defaults to appVersion
     pullPolicy: IfNotPresent
   # Shared auth token between worker and runner sidecars (required for external mode)
@@ -57,10 +57,10 @@ runners:
   # containers:
   #   - languages: ["javascript"]
   #     image:
-  #       repository: n8nio/n8n-runner-js
+  #       repository: n8nio/runners
   #   - languages: ["python"]
   #     image:
-  #       repository: n8nio/n8n-runner-python
+  #       repository: n8nio/runners
 
 # -- External S3 storage for binary data
 # Required for binary data persistence in queue mode
