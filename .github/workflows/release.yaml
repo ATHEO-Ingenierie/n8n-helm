@@ -35,7 +35,7 @@ jobs:
             | grep -v '^---$' | sort -u \
             | while read -r img; do
                 name=$(echo "$img" | sed 's|.*/||; s|:.*||')
-                printf '- name: %s\n  image: %s\n' "$name" "$img"
+                printf -- '- name: %s\n  image: %s\n' "$name" "$img"
               done)
           yq -i ".annotations.\"artifacthub.io/images\" = \"${IMAGES}\"" Chart.yaml
           OWNER=$(echo "${{ github.repository_owner }}" | tr '[:upper:]' '[:lower:]')
