@@ -1,0 +1,248 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "properties": {
+    "image": {
+      "type": "object",
+      "description": "n8n container image",
+      "properties": {
+        "repository": { "type": "string", "description": "Image repository" },
+        "tag": { "type": "string", "description": "Image tag (defaults to appVersion)" },
+        "pullPolicy": { "type": "string", "enum": ["Always", "IfNotPresent", "Never"], "description": "Image pull policy" }
+      }
+    },
+    "imagePullSecrets": {
+      "type": "array",
+      "description": "Docker registry secrets",
+      "items": { "type": "object" }
+    },
+    "nameOverride": { "type": "string" },
+    "fullnameOverride": { "type": "string" },
+    "config": {
+      "type": "object",
+      "description": "n8n environment variables (stored in ConfigMap)",
+      "additionalProperties": { "type": "string" }
+    },
+    "secret": {
+      "type": "object",
+      "description": "Sensitive n8n environment variables (stored in Secret)",
+      "additionalProperties": { "type": "string" }
+    },
+    "database": {
+      "type": "object",
+      "description": "Database configuration",
+      "properties": {
+        "type": {
+          "type": "string",
+          "enum": ["sqlite", "postgresdb"],
+          "description": "Database type (workers require postgresdb)"
+        },
+        "postgresdb": {
+          "type": "object",
+          "description": "PostgreSQL connection settings",
+          "properties": {
+            "host": { "type": "string", "description": "PostgreSQL host" },
+            "port": { "type": "integer", "description": "PostgreSQL port", "default": 5432 },
+            "database": { "type": "string", "description": "Database name" },
+            "user": { "type": "string", "description": "Database user" },
+            "password": { "type": "string", "description": "Database password (plain text)" },
+            "existingSecret": { "type": "string", "description": "Existing secret name for DB password" },
+            "existingSecretPasswordKey": { "type": "string", "description": "Key in the existing secret" }
+          }
+        }
+      }
+    },
+    "runners": {
+      "type": "object",
+      "description": "Task runner configuration",
+      "properties": {
+        "mode": {
+          "type": "string",
+          "enum": ["internal", "external"],
+          "description": "Runner mode"
+        },
+        "image": {
+          "type": "object",
+          "description": "Default runner sidecar image",
+          "properties": {
+            "repository": { "type": "string" },
+            "tag": { "type": "string" },
+            "pullPolicy": { "type": "string", "enum": ["Always", "IfNotPresent", "Never"] }
+          }
+        },
+        "authToken": { "type": "string", "description": "Shared auth token (required for external mode)" },
+        "resources": { "type": "object", "description": "Runner resource requests/limits" },
+        "extraEnv": { "type": "array", "description": "Extra environment variables for runners", "items": { "type": "object" } },
+        "containers": {
+          "type": "array",
+          "description": "Runner sidecar definitions (external mode only)",
+          "items": {
+            "type": "object",
+            "properties": {
+              "languages": {
+                "type": "array",
+                "items": { "type": "string", "enum": ["javascript", "python"] },
+                "description": "Languages for this runner"
+              },
+              "image": {
+                "type": "object",
+                "description": "Optional image override",
+                "properties": {
+                  "repository": { "type": "string" },
+                  "tag": { "type": "string" },
+                  "pullPolicy": { "type": "string", "enum": ["Always", "IfNotPresent", "Never"] }
+                }
+              }
+            },
+            "required": ["languages"]
+          }
+        }
+      }
+    },
+    "externalS3": {
+      "type": "object",
+      "description": "External S3 storage for binary data",
+      "properties": {
+        "enabled": { "type": "boolean", "description": "Enable S3 binary data storage" },
+        "host": { "type": "string", "description": "S3 host (e.g. s3.us-east-1.amazonaws.com)" },
+        "bucketName": { "type": "string", "description": "S3 bucket name" },
+        "bucketRegion": { "type": "string", "description": "S3 bucket region" },
+        "accessKey": { "type": "string", "description": "S3 access key (plain text)" },
+        "accessSecret": { "type": "string", "description": "S3 access secret (plain text)" },
+        "existingSecret": { "type": "string", "description": "Existing secret for S3 credentials" },
+        "existingSecretAccessKeyKey": { "type": "string", "description": "Key for access key in existing secret" },
+        "existingSecretAccessSecretKey": { "type": "string", "description": "Key for access secret in existing secret" }
+      }
+    },
+    "persistence": {
+      "type": "object",
+      "description": "Persistence for n8n data directory (standalone/SQLite mode)",
+      "properties": {
+        "enabled": { "type": "boolean", "description": "Enable PVC for n8n data" },
+        "size": { "type": "string", "description": "PVC size" },
+        "storageClass": { "type": "string", "description": "Storage class" },
+        "accessModes": {
+          "type": "array",
+          "items": { "type": "string", "enum": ["ReadWriteOnce", "ReadWriteMany", "ReadOnlyMany"] },
+          "description": "PVC access modes"
+        }
+      }
+    },
+    "main": {
+      "type": "object",
+      "description": "Main n8n process",
+      "properties": {
+        "replicas": { "type": "integer", "minimum": 1, "description": "Number of main pods (>1 enables multi-main HA)" },
+        "multiMain": {
+          "type": "object",
+          "description": "Multi-main HA settings",
+          "properties": {
+            "ttl": { "type": "integer", "description": "Leader key TTL in seconds" },
+            "checkInterval": { "type": "integer", "description": "Leader check interval in seconds" }
+          }
+        },
+        "resources": { "type": "object", "description": "Resource requests/limits" },
+        "podAnnotations": { "type": "object", "additionalProperties": { "type": "string" } },
+        "podLabels": { "type": "object", "additionalProperties": { "type": "string" } },
+        "nodeSelector": { "type": "object", "additionalProperties": { "type": "string" } },
+        "tolerations": { "type": "array", "items": { "type": "object" } },
+        "affinity": { "type": "object" },
+        "extraEnv": { "type": "array", "description": "Extra environment variables", "items": { "type": "object" } }
+      }
+    },
+    "worker": {
+      "type": "object",
+      "description": "Worker configuration (replicas > 0 enables queue mode)",
+      "properties": {
+        "replicas": { "type": "integer", "minimum": 0, "description": "Number of worker pods" },
+        "concurrency": { "type": "integer", "minimum": 1, "description": "Max concurrent executions per worker" },
+        "resources": { "type": "object" },
+        "podAnnotations": { "type": "object", "additionalProperties": { "type": "string" } },
+        "podLabels": { "type": "object", "additionalProperties": { "type": "string" } },
+        "nodeSelector": { "type": "object", "additionalProperties": { "type": "string" } },
+        "tolerations": { "type": "array", "items": { "type": "object" } },
+        "affinity": { "type": "object" },
+        "extraEnv": { "type": "array", "items": { "type": "object" } }
+      }
+    },
+    "webhook": {
+      "type": "object",
+      "description": "Webhook processor configuration",
+      "properties": {
+        "enabled": { "type": "boolean", "description": "Enable webhook processors" },
+        "replicas": { "type": "integer", "minimum": 1, "description": "Number of webhook pods" },
+        "url": { "type": "string", "description": "External webhook URL" },
+        "resources": { "type": "object" },
+        "podAnnotations": { "type": "object", "additionalProperties": { "type": "string" } },
+        "podLabels": { "type": "object", "additionalProperties": { "type": "string" } },
+        "nodeSelector": { "type": "object", "additionalProperties": { "type": "string" } },
+        "tolerations": { "type": "array", "items": { "type": "object" } },
+        "affinity": { "type": "object" },
+        "extraEnv": { "type": "array", "items": { "type": "object" } }
+      }
+    },
+    "testConnection": {
+      "type": "object",
+      "description": "Helm test connection pod",
+      "properties": {
+        "enabled": { "type": "boolean", "description": "Enable helm test" },
+        "image": { "type": "string", "description": "Image for test pod" }
+      }
+    },
+    "serviceAccount": {
+      "type": "object",
+      "properties": {
+        "create": { "type": "boolean", "description": "Create a service account" },
+        "automount": { "type": "boolean", "description": "Automount service account token" },
+        "annotations": { "type": "object", "additionalProperties": { "type": "string" } },
+        "name": { "type": "string", "description": "Service account name override" }
+      }
+    },
+    "service": {
+      "type": "object",
+      "properties": {
+        "type": { "type": "string", "enum": ["ClusterIP", "NodePort", "LoadBalancer"], "description": "Service type" },
+        "port": { "type": "integer", "description": "Service port" }
+      }
+    },
+    "ingress": {
+      "type": "object",
+      "properties": {
+        "enabled": { "type": "boolean", "description": "Enable ingress" },
+        "className": { "type": "string", "description": "Ingress class name" },
+        "annotations": { "type": "object", "additionalProperties": { "type": "string" } },
+        "hosts": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "host": { "type": "string" },
+              "paths": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "path": { "type": "string" },
+                    "pathType": { "type": "string", "enum": ["Prefix", "Exact", "ImplementationSpecific"] }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "tls": { "type": "array", "items": { "type": "object" } }
+      }
+    },
+    "externalRedis": {
+      "type": "object",
+      "description": "External Redis connection (required when worker.replicas > 0 or webhook.enabled)",
+      "properties": {
+        "host": { "type": "string", "description": "Redis host" },
+        "port": { "type": "integer", "description": "Redis port", "default": 6379 },
+        "password": { "type": "string", "description": "Redis password (plain text)" },
+        "existingSecret": { "type": "string", "description": "Existing secret for Redis password" },
+        "existingSecretPasswordKey": { "type": "string", "description": "Key in the existing secret" }
+      }
+    }
+  }
+}
