@@ -23,6 +23,18 @@ jobs:
         run: |
           TAG="${GITHUB_REF_NAME}"
           yq -i ".version = \"${TAG}\"" Chart.yaml
+
+          IMAGES=$(helm template release . \
+            --set database.type=postgresdb --set database.postgresdb.host=pg --set database.postgresdb.password=pass \
+            --set externalRedis.host=redis --set worker.replicas=1 \
+            --set runners.mode=external --set runners.authToken=tok \
+            | yq '.. | select(has("image")) | .image' 2>/dev/null \
+            | grep -v '^---$' | sort -u \
+            | while read -r img; do
+                name=$(echo "$img" | sed 's|.*/||; s|:.*||')
+                printf '- name: %s\n  image: %s\n' "$name" "$img"
+              done)
+          yq -i ".annotations.\"artifacthub.io/images\" = \"${IMAGES}\"" Chart.yaml
           OWNER=$(echo "${{ github.repository_owner }}" | tr '[:upper:]' '[:lower:]')
           helm package .
           helm push n8n-*.tgz "oci://ghcr.io/${OWNER}/charts"
