@@ -41,7 +41,7 @@ spec:
         - name: n8n-worker
           image: {{ include "n8n.image" . | quote }}
           imagePullPolicy: {{ .Values.image.pullPolicy }}
-          args: ["n8n", "worker", "--concurrency={{ .Values.worker.concurrency }}"]
+          args: ["worker", "--concurrency={{ .Values.worker.concurrency }}"]
           env:
             {{- include "n8n.env" . | nindent 12 }}
             {{- if eq .Values.runners.mode "external" }}
