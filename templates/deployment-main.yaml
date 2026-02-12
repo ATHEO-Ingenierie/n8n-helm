@@ -34,6 +34,10 @@ spec:
         {{- toYaml . | nindent 8 }}
       {{- end }}
       serviceAccountName: {{ include "n8n.serviceAccountName" . }}
+      {{- with .Values.main.podSecurityContext }}
+      securityContext:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
       containers:
         - name: n8n
           image: {{ include "n8n.image" . | quote }}
@@ -62,6 +66,10 @@ spec:
             {{- end }}
           envFrom:
             {{- include "n8n.envFrom" . | nindent 12 }}
+          {{- with .Values.main.containerSecurityContext }}
+          securityContext: 
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
           livenessProbe:
             httpGet:
               path: /healthz
@@ -104,6 +112,10 @@ spec:
             {{- end }}
           envFrom:
             {{- include "n8n.envFrom" $ | nindent 12 }}
+          {{- with (default $.Values.main.containerSecurityContext $.Values.runners.containerSecurityContext) }}
+          securityContext:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
           {{- with $.Values.runners.resources }}
           resources:
             {{- toYaml . | nindent 12 }}

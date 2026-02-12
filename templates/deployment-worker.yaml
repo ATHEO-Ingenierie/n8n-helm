@@ -33,6 +33,10 @@ spec:
         {{- toYaml . | nindent 8 }}
       {{- end }}
       serviceAccountName: {{ include "n8n.serviceAccountName" . }}
+      {{- with .Values.worker.podSecurityContext }}
+      securityContext:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
       containers:
         - name: n8n-worker
           image: {{ include "n8n.image" . | quote }}
@@ -54,6 +58,10 @@ spec:
             {{- end }}
           envFrom:
             {{- include "n8n.envFrom" . | nindent 12 }}
+          {{- with .Values.worker.containerSecurityContext }}
+          securityContext: 
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
           {{- with .Values.worker.resources }}
           resources:
             {{- toYaml . | nindent 12 }}
@@ -79,6 +87,10 @@ spec:
             {{- end }}
           envFrom:
             {{- include "n8n.envFrom" $ | nindent 12 }}
+          {{- with (default $.Values.worker.containerSecurityContext $.Values.runners.containerSecurityContext) }}
+          securityContext:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
           {{- with $.Values.runners.resources }}
           resources:
             {{- toYaml . | nindent 12 }}
