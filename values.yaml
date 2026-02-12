@@ -46,6 +46,8 @@ runners:
   authToken: ""
   resources: {}
   extraEnv: []
+  podSecurityContext: {}
+  containerSecurityContext: {}
   # Runner sidecar definitions (external mode only)
   # Each entry creates one sidecar container; languages are passed as CMD args
   # Available languages: javascript, python
@@ -98,6 +100,8 @@ main:
   tolerations: []
   affinity: {}
   extraEnv: []
+  podSecurityContext: {}
+  containerSecurityContext: {}
 
 # -- Worker configuration
 # Set replicas > 0 to enable queue mode (requires PostgreSQL + Redis)
@@ -111,7 +115,8 @@ worker:
   tolerations: []
   affinity: {}
   extraEnv: []
-
+  podSecurityContext: {}
+  containerSecurityContext: {}
 # -- Webhook processor (requires workers)
 webhook:
   enabled: false
