@@ -60,6 +60,8 @@ spec:
                 secretKeyRef:
                   name: {{ include "n8n.fullname" . }}-credentials
                   key: runner-auth-token
+            - name: OFFLOAD_MANUAL_EXECUTIONS_TO_WORKERS
+              value: "true"
             {{- end }}
             {{- with .Values.main.extraEnv }}
             {{- toYaml . | nindent 12 }}
