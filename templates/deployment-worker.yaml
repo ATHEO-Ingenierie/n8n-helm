@@ -66,6 +66,12 @@ spec:
           resources:
             {{- toYaml . | nindent 12 }}
           {{- end }}
+          {{- if .Values.trustCerts.enabled }}
+          volumeMounts:
+            - name: trust-certs
+              mountPath: /opt/custom-certificates
+              readOnly: true
+          {{- end }}
         {{- if eq .Values.runners.mode "external" }}
         {{- range $i, $runner := .Values.runners.containers }}
         {{- $img := default dict $runner.image }}
@@ -97,6 +103,12 @@ spec:
           {{- end }}
         {{- end }}
         {{- end }}
+      {{- if .Values.trustCerts.enabled }}
+      volumes:
+        - name: trust-certs
+          configMap:
+            name: {{ .Values.trustCerts.configMapName }}
+      {{- end }}
       {{- with .Values.worker.nodeSelector }}
       nodeSelector:
         {{- toYaml . | nindent 8 }}

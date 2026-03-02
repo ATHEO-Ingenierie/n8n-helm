@@ -65,6 +65,18 @@ spec:
           resources:
             {{- toYaml . | nindent 12 }}
           {{- end }}
+          {{- if .Values.trustCerts.enabled }}
+          volumeMounts:
+            - name: trust-certs
+              mountPath: /opt/custom-certificates
+              readOnly: true
+          {{- end }}
+      {{- if .Values.trustCerts.enabled }}
+      volumes:
+        - name: trust-certs
+          configMap:
+            name: {{ .Values.trustCerts.configMapName }}
+      {{- end }}
       {{- with .Values.webhook.nodeSelector }}
       nodeSelector:
         {{- toYaml . | nindent 8 }}

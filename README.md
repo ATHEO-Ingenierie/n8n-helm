@@ -318,6 +318,13 @@ All components also support `podAnnotations`, `podLabels`, `nodeSelector`, `tole
 | `externalS3.existingSecretAccessKeyKey` | Key for access key in existing secret | `access-key` |
 | `externalS3.existingSecretAccessSecretKey` | Key for access secret in existing secret | `access-secret` |
 
+### Trusted certificates
+
+| Parameter | Description | Default |
+|-----------|-------------|---------|
+| `trustCerts.enabled` | Mount trusted certificates from a ConfigMap | `false` |
+| `trustCerts.configMapName` | Name of the ConfigMap containing certificate files | `""` |
+
 ### Persistence
 
 | Parameter | Description | Default |
@@ -369,3 +376,4 @@ The chart validates your configuration and fails with a clear error message if:
 - `externalS3.enabled=true` without credentials (`accessKey`/`accessSecret` or `existingSecret`)
 - `externalS3.accessKey` and `externalS3.existingSecret` both set (mutually exclusive)
 - `main.replicas > 1` without `worker.replicas > 0` (multi-main requires PostgreSQL + Redis)
+- `trustCerts.enabled=true` without `trustCerts.configMapName`
