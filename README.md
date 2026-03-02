@@ -320,14 +320,50 @@ All components also support `podAnnotations`, `podLabels`, `nodeSelector`, `tole
 
 ### Trusted certificates
 
+An initContainer copies certificates from ConfigMap/Secret sources into a writable `emptyDir` at `/opt/custom-certificates`. This avoids permission issues with `subPath` mounts.
+
 | Parameter | Description | Default |
 |-----------|-------------|---------|
 | `trustCerts.enabled` | Mount trusted CA certificates (PEM format only) | `false` |
+| `trustCerts.image` | InitContainer image for copying/splitting certs (must provide `sh`, `cp`, and `awk`) | `busybox` |
 | `trustCerts.certificates` | List of certificates to mount in `/opt/custom-certificates` | `[]` |
 | `trustCerts.certificates[].configMapName` | Source ConfigMap (mutually exclusive with `secretName`) | - |
 | `trustCerts.certificates[].secretName` | Source Secret (mutually exclusive with `configMapName`) | - |
-| `trustCerts.certificates[].key` | Key in the ConfigMap/Secret | - |
-| `trustCerts.certificates[].name` | Filename in mount path (defaults to `key`) | - |
+| `trustCerts.certificates[].key` | Key in the ConfigMap/Secret (omit to mount all keys) | - |
+| `trustCerts.certificates[].name` | Filename in mount path (defaults to `key`; requires `key`) | - |
+| `trustCerts.certificates[].split` | Split PEM bundle into individual cert files (requires `key`) | `false` |
+
+**Modes:**
+
+```yaml
+# Single key from a ConfigMap
+trustCerts:
+  enabled: true
+  certificates:
+    - configMapName: my-ca-certs
+      key: ca-bundle.crt
+      name: my-ca.pem         # optional rename
+
+# Entire ConfigMap (all keys mounted as files)
+trustCerts:
+  enabled: true
+  certificates:
+    - configMapName: my-ca-certs
+
+# Split a PEM bundle into individual certs
+trustCerts:
+  enabled: true
+  certificates:
+    - configMapName: my-ca-certs
+      key: ca-bundle.pem
+      split: true
+
+# Entire Secret
+trustCerts:
+  enabled: true
+  certificates:
+    - secretName: tls-certs
+```
 
 ### Persistence
 
@@ -383,3 +419,5 @@ The chart validates your configuration and fails with a clear error message if:
 - `trustCerts.enabled=true` without `trustCerts.certificates`
 - `trustCerts.certificates[]` with both `configMapName` and `secretName` (mutually exclusive)
 - `trustCerts.certificates[]` without `configMapName` or `secretName`
+- `trustCerts.certificates[].split` without `key` (can't split an entire ConfigMap/Secret)
+- `trustCerts.certificates[].name` without `key` (can't rename without a specific key)

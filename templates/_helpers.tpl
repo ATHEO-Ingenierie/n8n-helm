@@ -243,6 +243,12 @@ Validate values
 {{- if not (or $cert.configMapName $cert.secretName) -}}
 {{- fail (printf "trustCerts.certificates[%d]: configMapName or secretName is required" $i) -}}
 {{- end -}}
+{{- if and $cert.split (not $cert.key) -}}
+{{- fail (printf "trustCerts.certificates[%d]: split requires key to be set" $i) -}}
+{{- end -}}
+{{- if and $cert.name (not $cert.key) -}}
+{{- fail (printf "trustCerts.certificates[%d]: name requires key to be set" $i) -}}
+{{- end -}}
 {{- end -}}
 {{- end -}}
 
@@ -331,6 +337,74 @@ Common environment variables for all n8n containers
     secretKeyRef:
       name: {{ include "n8n.s3.secretName" . }}
       key: {{ include "n8n.s3.accessSecretSecretKey" . }}
+{{- end }}
+{{- end -}}
+
+{{/*
+trustCerts initContainer — copies/splits certs from source volumes into emptyDir
+*/}}
+{{- define "n8n.trustCerts.initContainer" -}}
+- name: trust-certs-init
+  image: {{ .Values.trustCerts.image | quote }}
+  command:
+    - sh
+    - -c
+    - |
+      {{- range $i, $cert := .Values.trustCerts.certificates }}
+      {{- if $cert.key }}
+      {{- if $cert.split }}
+      {{- $basename := trimSuffix ".pem" (trimSuffix ".crt" (trimSuffix ".cer" (default $cert.key $cert.name))) }}
+      awk '/-----BEGIN/{f="/opt/custom-certificates/{{ $basename }}-"n".pem"; n++} f{print > f} /-----END/{close(f); f=""}' '/tmp/certs/{{ $i }}/{{ $cert.key }}'
+      {{- else }}
+      cp '/tmp/certs/{{ $i }}/{{ $cert.key }}' '/opt/custom-certificates/{{ default $cert.key $cert.name }}'
+      {{- end }}
+      {{- else }}
+      cp /tmp/certs/{{ $i }}/* /opt/custom-certificates/
+      {{- end }}
+      {{- end }}
+  volumeMounts:
+    - name: custom-certs
+      mountPath: /opt/custom-certificates
+    {{- range $i, $cert := .Values.trustCerts.certificates }}
+    - name: trust-cert-src-{{ $i }}
+      mountPath: /tmp/certs/{{ $i }}
+      readOnly: true
+    {{- end }}
+{{- end -}}
+
+{{/*
+trustCerts volumeMount for the main container
+*/}}
+{{- define "n8n.trustCerts.volumeMount" -}}
+- name: custom-certs
+  mountPath: /opt/custom-certificates
+{{- end -}}
+
+{{/*
+trustCerts volumes — emptyDir + source ConfigMap/Secret per cert entry
+*/}}
+{{- define "n8n.trustCerts.volumes" -}}
+- name: custom-certs
+  emptyDir: {}
+{{- range $i, $cert := .Values.trustCerts.certificates }}
+- name: trust-cert-src-{{ $i }}
+  {{- if $cert.configMapName }}
+  configMap:
+    name: {{ $cert.configMapName }}
+    {{- if $cert.key }}
+    items:
+      - key: {{ $cert.key }}
+        path: {{ $cert.key }}
+    {{- end }}
+  {{- else }}
+  secret:
+    secretName: {{ $cert.secretName }}
+    {{- if $cert.key }}
+    items:
+      - key: {{ $cert.key }}
+        path: {{ $cert.key }}
+    {{- end }}
+  {{- end }}
 {{- end }}
 {{- end -}}
 

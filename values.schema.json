@@ -104,6 +104,7 @@
       "description": "Mount trusted CA certificates (PEM format) to /opt/custom-certificates",
       "properties": {
         "enabled": { "type": "boolean", "description": "Enable trusted certificates mount" },
+        "image": { "type": "string", "description": "InitContainer image for copying/splitting certs" },
         "certificates": {
           "type": "array",
           "description": "List of certificate files to mount from ConfigMaps or Secrets",
@@ -112,10 +113,10 @@
             "properties": {
               "configMapName": { "type": "string", "description": "ConfigMap name (mutually exclusive with secretName)" },
               "secretName": { "type": "string", "description": "Secret name (mutually exclusive with configMapName)" },
-              "key": { "type": "string", "description": "Key in the ConfigMap/Secret" },
-              "name": { "type": "string", "description": "Filename in /opt/custom-certificates (defaults to key)" }
-            },
-            "required": ["key"]
+              "key": { "type": "string", "description": "Key in the ConfigMap/Secret (optional; omit to mount all keys)" },
+              "name": { "type": "string", "description": "Filename in /opt/custom-certificates (defaults to key; requires key)" },
+              "split": { "type": "boolean", "description": "Split PEM bundle into individual certs (requires key)" }
+            }
           }
         }
       }
