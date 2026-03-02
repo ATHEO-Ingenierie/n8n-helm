@@ -56,7 +56,7 @@ spec:
             - name: N8N_DISABLE_PRODUCTION_MAIN_PROCESS
               value: "true"
             {{- end }}
-            {{- if eq .Values.runners.mode "external" }}
+            {{- if and (eq .Values.runners.mode "external") (not (include "n8n.isQueueMode" .)) }}
             - name: N8N_RUNNERS_BROKER_LISTEN_ADDRESS
               value: "0.0.0.0"
             - name: N8N_RUNNERS_AUTH_TOKEN
@@ -64,6 +64,10 @@ spec:
                 secretKeyRef:
                   name: {{ include "n8n.fullname" . }}-credentials
                   key: runner-auth-token
+            {{- end }}
+            {{- if include "n8n.isQueueMode" . }}
+            - name: OFFLOAD_MANUAL_EXECUTIONS_TO_WORKERS
+              value: "true"
             {{- end }}
             {{- with .Values.main.extraEnv }}
             {{- toYaml . | nindent 12 }}
@@ -100,7 +104,7 @@ spec:
             {{- include "n8n.trustCerts.volumeMount" . | nindent 12 }}
             {{- end }}
           {{- end }}
-        {{- if eq .Values.runners.mode "external" }}
+        {{- if and (eq .Values.runners.mode "external") (not (include "n8n.isQueueMode" .)) }}
         {{- range $i, $runner := .Values.runners.containers }}
         {{- $img := default dict $runner.image }}
         - name: n8n-runner-{{ $i }}
