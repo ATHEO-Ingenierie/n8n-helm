@@ -154,6 +154,8 @@ webhook:
   tolerations: []
   affinity: {}
   extraEnv: []
+  podSecurityContext: {}
+  containerSecurityContext: {}
 
 # -- Helm test connection pod
 testConnection:

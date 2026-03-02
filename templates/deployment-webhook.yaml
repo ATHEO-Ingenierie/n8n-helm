@@ -33,9 +33,13 @@ spec:
         {{- toYaml . | nindent 8 }}
       {{- end }}
       serviceAccountName: {{ include "n8n.serviceAccountName" . }}
+      {{- with .Values.webhook.podSecurityContext }}
+      securityContext:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
       {{- if .Values.trustCerts.enabled }}
       initContainers:
-        {{- include "n8n.trustCerts.initContainer" (dict "Values" .Values "securityContext" .Values.main.containerSecurityContext) | nindent 8 }}
+        {{- include "n8n.trustCerts.initContainer" (dict "Values" .Values "securityContext" .Values.webhook.containerSecurityContext) | nindent 8 }}
       {{- end }}
       containers:
         - name: n8n-webhook
@@ -53,6 +57,10 @@ spec:
             {{- end }}
           envFrom:
             {{- include "n8n.envFrom" . | nindent 12 }}
+          {{- with .Values.webhook.containerSecurityContext }}
+          securityContext:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
           livenessProbe:
             httpGet:
               path: /healthz
