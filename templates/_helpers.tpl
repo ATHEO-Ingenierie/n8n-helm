@@ -342,10 +342,15 @@ Common environment variables for all n8n containers
 
 {{/*
 trustCerts initContainer — copies/splits certs from source volumes into emptyDir
+Expects a dict with keys: Values (chart values) and securityContext (container security context)
 */}}
 {{- define "n8n.trustCerts.initContainer" -}}
 - name: trust-certs-init
   image: {{ .Values.trustCerts.image | quote }}
+  {{- with .securityContext }}
+  securityContext:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
   command:
     - sh
     - -c

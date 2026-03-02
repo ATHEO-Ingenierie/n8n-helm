@@ -200,7 +200,9 @@
         "nodeSelector": { "type": "object", "additionalProperties": { "type": "string" } },
         "tolerations": { "type": "array", "items": { "type": "object" } },
         "affinity": { "type": "object" },
-        "extraEnv": { "type": "array", "items": { "type": "object" } }
+        "extraEnv": { "type": "array", "items": { "type": "object" } },
+        "podSecurityContext": { "type": "object", "description": "Pod security context for webhook pods" },
+        "containerSecurityContext": { "type": "object", "description": "Container security context for webhook containers" }
       }
     },
     "testConnection": {
