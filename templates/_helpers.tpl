@@ -236,6 +236,14 @@ Validate values
 {{- if and .Values.trustCerts.enabled (not .Values.trustCerts.certificates) -}}
 {{- fail "trustCerts.certificates is required when trustCerts.enabled=true" -}}
 {{- end -}}
+{{- range $i, $cert := .Values.trustCerts.certificates -}}
+{{- if and $cert.configMapName $cert.secretName -}}
+{{- fail (printf "trustCerts.certificates[%d]: configMapName and secretName are mutually exclusive" $i) -}}
+{{- end -}}
+{{- if not (or $cert.configMapName $cert.secretName) -}}
+{{- fail (printf "trustCerts.certificates[%d]: configMapName or secretName is required" $i) -}}
+{{- end -}}
+{{- end -}}
 {{- end -}}
 
 {{/*

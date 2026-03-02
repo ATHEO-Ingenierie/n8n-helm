@@ -101,19 +101,21 @@
     },
     "trustCerts": {
       "type": "object",
-      "description": "Mount trusted certificates from ConfigMaps to /opt/custom-certificates",
+      "description": "Mount trusted CA certificates (PEM format) to /opt/custom-certificates",
       "properties": {
         "enabled": { "type": "boolean", "description": "Enable trusted certificates mount" },
         "certificates": {
           "type": "array",
-          "description": "List of certificate files to mount",
+          "description": "List of certificate files to mount from ConfigMaps or Secrets",
           "items": {
             "type": "object",
             "properties": {
-              "configMapName": { "type": "string", "description": "ConfigMap name containing the certificate" },
-              "key": { "type": "string", "description": "Key in the ConfigMap to mount as a file" }
+              "configMapName": { "type": "string", "description": "ConfigMap name (mutually exclusive with secretName)" },
+              "secretName": { "type": "string", "description": "Secret name (mutually exclusive with configMapName)" },
+              "key": { "type": "string", "description": "Key in the ConfigMap/Secret" },
+              "name": { "type": "string", "description": "Filename in /opt/custom-certificates (defaults to key)" }
             },
-            "required": ["configMapName", "key"]
+            "required": ["key"]
           }
         }
       }
