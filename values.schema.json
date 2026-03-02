@@ -101,10 +101,21 @@
     },
     "trustCerts": {
       "type": "object",
-      "description": "Mount trusted certificates from a ConfigMap to /opt/custom-certificates",
+      "description": "Mount trusted certificates from ConfigMaps to /opt/custom-certificates",
       "properties": {
         "enabled": { "type": "boolean", "description": "Enable trusted certificates mount" },
-        "configMapName": { "type": "string", "description": "Name of the ConfigMap containing certificate files" }
+        "certificates": {
+          "type": "array",
+          "description": "List of certificate files to mount",
+          "items": {
+            "type": "object",
+            "properties": {
+              "configMapName": { "type": "string", "description": "ConfigMap name containing the certificate" },
+              "key": { "type": "string", "description": "Key in the ConfigMap to mount as a file" }
+            },
+            "required": ["configMapName", "key"]
+          }
+        }
       }
     },
     "externalS3": {

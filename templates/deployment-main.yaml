@@ -92,10 +92,10 @@ spec:
             - name: data
               mountPath: /home/node/.n8n
             {{- end }}
-            {{- if .Values.trustCerts.enabled }}
-            - name: trust-certs
-              mountPath: /opt/custom-certificates
-              readOnly: true
+            {{- range $i, $cert := .Values.trustCerts.certificates }}
+            - name: trust-cert-{{ $i }}
+              mountPath: /opt/custom-certificates/{{ $cert.key }}
+              subPath: {{ $cert.key }}
             {{- end }}
           {{- end }}
         {{- if eq .Values.runners.mode "external" }}
@@ -136,10 +136,13 @@ spec:
           persistentVolumeClaim:
             claimName: {{ include "n8n.fullname" . }}
         {{- end }}
-        {{- if .Values.trustCerts.enabled }}
-        - name: trust-certs
+        {{- range $i, $cert := .Values.trustCerts.certificates }}
+        - name: trust-cert-{{ $i }}
           configMap:
-            name: {{ .Values.trustCerts.configMapName }}
+            name: {{ $cert.configMapName }}
+            items:
+              - key: {{ $cert.key }}
+                path: {{ $cert.key }}
         {{- end }}
       {{- end }}
       {{- with .Values.main.nodeSelector }}

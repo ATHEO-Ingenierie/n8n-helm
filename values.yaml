@@ -64,11 +64,13 @@ runners:
   #     image:
   #       repository: n8nio/runners
 
-# -- Trusted certificates from a ConfigMap
-# All items from the ConfigMap are mounted as files in /opt/custom-certificates on all n8n components
+# -- Trusted certificates mounted in /opt/custom-certificates on all n8n components
+# Each entry references a ConfigMap name and key to mount as a file
 trustCerts:
   enabled: false
-  configMapName: ""
+  certificates: []
+  # - configMapName: my-ca-certs
+  #   key: ca.crt
 
 # -- External S3 storage for binary data
 # Required for binary data persistence in queue mode

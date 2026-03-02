@@ -233,8 +233,8 @@ Validate values
 {{- if and (gt (int .Values.main.replicas) 1) (not (include "n8n.isQueueMode" .)) -}}
 {{- fail "main.replicas > 1 requires worker.replicas > 0 (multi-main needs PostgreSQL + Redis)" -}}
 {{- end -}}
-{{- if and .Values.trustCerts.enabled (not .Values.trustCerts.configMapName) -}}
-{{- fail "trustCerts.configMapName is required when trustCerts.enabled=true" -}}
+{{- if and .Values.trustCerts.enabled (not .Values.trustCerts.certificates) -}}
+{{- fail "trustCerts.certificates is required when trustCerts.enabled=true" -}}
 {{- end -}}
 {{- end -}}
 
