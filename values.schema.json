@@ -99,6 +99,14 @@
         }
       }
     },
+    "trustCerts": {
+      "type": "object",
+      "description": "Mount trusted certificates from a ConfigMap to /opt/custom-certificates",
+      "properties": {
+        "enabled": { "type": "boolean", "description": "Enable trusted certificates mount" },
+        "configMapName": { "type": "string", "description": "Name of the ConfigMap containing certificate files" }
+      }
+    },
     "externalS3": {
       "type": "object",
       "description": "External S3 storage for binary data",

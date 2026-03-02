@@ -86,10 +86,17 @@ spec:
           resources:
             {{- toYaml . | nindent 12 }}
           {{- end }}
-          {{- if and .Values.persistence.enabled (not (include "n8n.isQueueMode" .)) }}
+          {{- if or (and .Values.persistence.enabled (not (include "n8n.isQueueMode" .))) .Values.trustCerts.enabled }}
           volumeMounts:
+            {{- if and .Values.persistence.enabled (not (include "n8n.isQueueMode" .)) }}
             - name: data
               mountPath: /home/node/.n8n
+            {{- end }}
+            {{- if .Values.trustCerts.enabled }}
+            - name: trust-certs
+              mountPath: /opt/custom-certificates
+              readOnly: true
+            {{- end }}
           {{- end }}
         {{- if eq .Values.runners.mode "external" }}
         {{- range $i, $runner := .Values.runners.containers }}
@@ -122,11 +129,18 @@ spec:
           {{- end }}
         {{- end }}
         {{- end }}
-      {{- if and .Values.persistence.enabled (not (include "n8n.isQueueMode" .)) }}
+      {{- if or (and .Values.persistence.enabled (not (include "n8n.isQueueMode" .))) .Values.trustCerts.enabled }}
       volumes:
+        {{- if and .Values.persistence.enabled (not (include "n8n.isQueueMode" .)) }}
         - name: data
           persistentVolumeClaim:
             claimName: {{ include "n8n.fullname" . }}
+        {{- end }}
+        {{- if .Values.trustCerts.enabled }}
+        - name: trust-certs
+          configMap:
+            name: {{ .Values.trustCerts.configMapName }}
+        {{- end }}
       {{- end }}
       {{- with .Values.main.nodeSelector }}
       nodeSelector:
