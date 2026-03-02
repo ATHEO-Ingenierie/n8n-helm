@@ -39,7 +39,7 @@ spec:
       {{- end }}
       {{- if .Values.trustCerts.enabled }}
       initContainers:
-        {{- include "n8n.trustCerts.initContainer" . | nindent 8 }}
+        {{- include "n8n.trustCerts.initContainer" (dict "Values" .Values "securityContext" .Values.worker.containerSecurityContext) | nindent 8 }}
       {{- end }}
       containers:
         - name: n8n-worker
