@@ -67,15 +67,30 @@ spec:
           {{- end }}
           {{- if .Values.trustCerts.enabled }}
           volumeMounts:
-            - name: trust-certs
-              mountPath: /opt/custom-certificates
-              readOnly: true
+            {{- range $i, $cert := .Values.trustCerts.certificates }}
+            - name: trust-cert-{{ $i }}
+              mountPath: /opt/custom-certificates/{{ default $cert.key $cert.name }}
+              subPath: {{ $cert.key }}
+            {{- end }}
           {{- end }}
       {{- if .Values.trustCerts.enabled }}
       volumes:
-        - name: trust-certs
+        {{- range $i, $cert := .Values.trustCerts.certificates }}
+        - name: trust-cert-{{ $i }}
+          {{- if $cert.configMapName }}
           configMap:
-            name: {{ .Values.trustCerts.configMapName }}
+            name: {{ $cert.configMapName }}
+            items:
+              - key: {{ $cert.key }}
+                path: {{ $cert.key }}
+          {{- else }}
+          secret:
+            secretName: {{ $cert.secretName }}
+            items:
+              - key: {{ $cert.key }}
+                path: {{ $cert.key }}
+          {{- end }}
+        {{- end }}
       {{- end }}
       {{- with .Values.webhook.nodeSelector }}
       nodeSelector:

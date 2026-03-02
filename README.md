@@ -322,8 +322,12 @@ All components also support `podAnnotations`, `podLabels`, `nodeSelector`, `tole
 
 | Parameter | Description | Default |
 |-----------|-------------|---------|
-| `trustCerts.enabled` | Mount trusted certificates from a ConfigMap | `false` |
-| `trustCerts.configMapName` | Name of the ConfigMap containing certificate files | `""` |
+| `trustCerts.enabled` | Mount trusted CA certificates (PEM format only) | `false` |
+| `trustCerts.certificates` | List of certificates to mount in `/opt/custom-certificates` | `[]` |
+| `trustCerts.certificates[].configMapName` | Source ConfigMap (mutually exclusive with `secretName`) | - |
+| `trustCerts.certificates[].secretName` | Source Secret (mutually exclusive with `configMapName`) | - |
+| `trustCerts.certificates[].key` | Key in the ConfigMap/Secret | - |
+| `trustCerts.certificates[].name` | Filename in mount path (defaults to `key`) | - |
 
 ### Persistence
 
@@ -376,4 +380,6 @@ The chart validates your configuration and fails with a clear error message if:
 - `externalS3.enabled=true` without credentials (`accessKey`/`accessSecret` or `existingSecret`)
 - `externalS3.accessKey` and `externalS3.existingSecret` both set (mutually exclusive)
 - `main.replicas > 1` without `worker.replicas > 0` (multi-main requires PostgreSQL + Redis)
-- `trustCerts.enabled=true` without `trustCerts.configMapName`
+- `trustCerts.enabled=true` without `trustCerts.certificates`
+- `trustCerts.certificates[]` with both `configMapName` and `secretName` (mutually exclusive)
+- `trustCerts.certificates[]` without `configMapName` or `secretName`
