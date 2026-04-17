@@ -1,8 +1,6 @@
-{{- include "n8n.validate" . -}}
+n8n has been deployed in {{ if include "n8n.isQueueMode" . }}queue{{ else }}standalone{{ end }} mode.
 
-n8n has been deployed in {{ .Values.mode }} mode.
-
-{{- if eq .Values.mode "standalone" }}
+{{- if not (include "n8n.isQueueMode" .) }}
 
   Running as a single all-in-one instance.
   {{- if eq .Values.database.type "sqlite" }}

@@ -280,8 +280,6 @@ Common environment variables for all n8n containers
   value: "queue"
 {{- end }}
 {{- if or (include "n8n.isQueueMode" .) (eq .Values.runners.mode "external") }}
-- name: N8N_RUNNERS_ENABLED
-  value: "true"
 - name: N8N_RUNNERS_MODE
   value: {{ .Values.runners.mode | quote }}
 {{- end }}
@@ -317,8 +315,6 @@ Common environment variables for all n8n containers
   value: {{ .Values.main.multiMain.checkInterval | quote }}
 {{- end }}
 {{- if .Values.externalS3.enabled }}
-- name: N8N_AVAILABLE_BINARY_DATA_MODES
-  value: "filesystem,s3"
 - name: N8N_DEFAULT_BINARY_DATA_MODE
   value: "s3"
 - name: N8N_EXTERNAL_STORAGE_S3_HOST
@@ -419,7 +415,7 @@ Common envFrom for all n8n containers
 {{- define "n8n.envFrom" -}}
 - configMapRef:
     name: {{ include "n8n.fullname" . }}
-{{- if .Values.secret }}
+{{- if not (empty .Values.secret) }}
 - secretRef:
     name: {{ include "n8n.fullname" . }}
 {{- end }}

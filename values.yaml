@@ -46,7 +46,6 @@ runners:
   authToken: ""
   resources: {}
   extraEnv: []
-  podSecurityContext: {}
   containerSecurityContext: {}
   # Runner sidecar definitions (external mode only)
   # Each entry creates one sidecar container; languages are passed as CMD args
