@@ -73,6 +73,7 @@
         "authToken": { "type": "string", "description": "Shared auth token (required for external mode)" },
         "resources": { "type": "object", "description": "Runner resource requests/limits" },
         "extraEnv": { "type": "array", "description": "Extra environment variables for runners", "items": { "type": "object" } },
+        "containerSecurityContext": { "type": "object", "description": "Container security context for runner sidecar containers" },
         "containers": {
           "type": "array",
           "description": "Runner sidecar definitions (external mode only)",
@@ -169,7 +170,9 @@
         "nodeSelector": { "type": "object", "additionalProperties": { "type": "string" } },
         "tolerations": { "type": "array", "items": { "type": "object" } },
         "affinity": { "type": "object" },
-        "extraEnv": { "type": "array", "description": "Extra environment variables", "items": { "type": "object" } }
+        "extraEnv": { "type": "array", "description": "Extra environment variables", "items": { "type": "object" } },
+        "podSecurityContext": { "type": "object", "description": "Pod security context for main pods" },
+        "containerSecurityContext": { "type": "object", "description": "Container security context for main containers" }
       }
     },
     "worker": {
@@ -184,7 +187,9 @@
         "nodeSelector": { "type": "object", "additionalProperties": { "type": "string" } },
         "tolerations": { "type": "array", "items": { "type": "object" } },
         "affinity": { "type": "object" },
-        "extraEnv": { "type": "array", "items": { "type": "object" } }
+        "extraEnv": { "type": "array", "items": { "type": "object" } },
+        "podSecurityContext": { "type": "object", "description": "Pod security context for worker pods" },
+        "containerSecurityContext": { "type": "object", "description": "Container security context for worker containers" }
       }
     },
     "webhook": {
