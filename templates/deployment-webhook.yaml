@@ -45,7 +45,7 @@ spec:
         - name: n8n-webhook
           image: {{ include "n8n.image" . | quote }}
           imagePullPolicy: {{ .Values.image.pullPolicy }}
-          args: ["n8n", "webhook"]
+          args: ["webhook"]
           ports:
             - name: http
               containerPort: 5678
