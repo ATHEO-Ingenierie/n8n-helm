@@ -419,7 +419,7 @@ Common envFrom for all n8n containers
 {{- define "n8n.envFrom" -}}
 - configMapRef:
     name: {{ include "n8n.fullname" . }}
-{{- if .Values.secret }}
+{{- if not (empty .Values.secret) }}
 - secretRef:
     name: {{ include "n8n.fullname" . }}
 {{- end }}
