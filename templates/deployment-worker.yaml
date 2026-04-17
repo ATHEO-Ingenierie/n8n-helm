@@ -61,6 +61,8 @@ spec:
                   name: {{ include "n8n.fullname" . }}-credentials
                   key: runner-auth-token
             {{- end }}
+            - name: QUEUE_HEALTH_CHECK_ACTIVE
+              value: "true"
             {{- with .Values.worker.extraEnv }}
             {{- toYaml . | nindent 12 }}
             {{- end }}
