@@ -275,7 +275,7 @@ secret:
 |-----------|-------------|---------|
 | `runners.mode` | `internal` or `external` | `internal` |
 | `runners.authToken` | Shared auth token between worker and runners (required for external) | `""` |
-| `runners.image.repository` | Default runner image | `n8nio/n8n-runner` |
+| `runners.image.repository` | Default runner image | `n8nio/runners` |
 | `runners.image.tag` | Default runner tag | `appVersion` |
 | `runners.resources` | Resources for all runner sidecars | `{}` |
 | `runners.extraEnv` | Extra env vars for all runner sidecars | `[]` |
